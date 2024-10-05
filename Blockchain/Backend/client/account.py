@@ -5,21 +5,29 @@ import secrets
 from Blockchain.Backend.util.util import hash160, hash256
 
 class account:
-    def createKeys(self):
-        Gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
-        Gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
+    def createKeys(self, prefix='garuda'):
+        Gx = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798
+        Gy = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
 
         G = Sha256Point(Gx, Gy)
 
-        privateKey = secrets.randbits(256)
-        unCompressedPyblicKey = privateKey * G
-        Xpoint = unCompressedPyblicKey.x
-        Ypoint = unCompressedPyblicKey.y
+        # Menggunakan secrets.token_bytes untuk menghasilkan 32 byte (256-bit) private key
+        privateKey = secrets.token_bytes(32)  # 32 bytes = 256 bits
+        privateKeyHex = privateKey.hex()  # Mengubahnya menjadi format hexadecimal
+        
+        # Menggabungkan awalan "garuda" dengan private key hexadecimal
+        customPrivateKey = f"{prefix}{privateKeyHex}"
+        
+        # Menggunakan privateKey yang sudah dalam byte untuk mendapatkan public key
+        privateKey_int = int.from_bytes(privateKey, 'big')  # Ubah dari bytes ke integer
+        unCompressedPublicKey = privateKey_int * G
+        Xpoint = unCompressedPublicKey.x
+        Ypoint = unCompressedPublicKey.y
 
         if Ypoint.num % 2 == 0:
-            compressKey = b'\0x2' + Xpoint.num.to_bytes(32, 'big')
+            compressKey = b'\x02' + Xpoint.num.to_bytes(32, 'big')
         else:
-            compressKey = b'\0x3' + Xpoint.num.to_bytes(32, 'big')
+            compressKey = b'\x03' + Xpoint.num.to_bytes(32, 'big')
 
         hash160_var = hash160(compressKey)
         """Prefix for Mainnet"""
@@ -52,8 +60,9 @@ class account:
 
         PublicAddres = prefix + result
 
-        print(f"Private Key {privateKey}")
-        print(f"Public Key  {PublicAddres}")
+        # Menampilkan private key custom dengan awalan 'garuda'
+        print(f"Private Key : {customPrivateKey}")
+        print(f"Public Key  : {PublicAddres}")
 
 if __name__ =='__main__':
     acct = account()
